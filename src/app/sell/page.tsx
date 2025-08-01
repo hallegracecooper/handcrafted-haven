@@ -363,7 +363,7 @@ export default function SellPage() {
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
               <span style={{ color: 'var(--accent-green)', fontSize: '18px' }}>✓</span>
-              <span style={{ color: '#374151' }}>Use clear, high-quality photos that showcase your product's details</span>
+                             <span style={{ color: '#374151' }}>Use clear, high-quality photos that showcase your product&apos;s details</span>
             </li>
             <li style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
               <span style={{ color: 'var(--accent-green)', fontSize: '18px' }}>✓</span>

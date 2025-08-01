@@ -38,7 +38,7 @@ export default function NotFound() {
           marginBottom: '32px',
           lineHeight: '1.6'
         }}>
-          Sorry, we couldn't find the product you're looking for. It may have been removed or the link might be incorrect.
+          Sorry, we couldn&apos;t find the product you&apos;re looking for. It may have been removed or the link might be incorrect.
         </p>
         
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>

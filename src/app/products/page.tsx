@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { products, categories, Product } from '@/data/products';
+import { products, categories } from '@/data/products';
 import ProductCard from '@/components/ProductCard';
 
 export default function ProductsPage() {

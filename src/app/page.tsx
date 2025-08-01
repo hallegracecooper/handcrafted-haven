@@ -25,12 +25,7 @@ const buttonStyle: React.CSSProperties = {
   transition: "all 0.2s ease",
 };
 
-const outlineButtonStyle: React.CSSProperties = {
-  ...buttonStyle,
-  backgroundColor: "transparent",
-  color: "var(--foreground)",
-  border: "2px solid var(--foreground)",
-};
+
 
 export default function Home() {
   return (
