@@ -54,9 +54,6 @@ export default function Home() {
         <a href="/products" style={buttonStyle}>
           Browse Products
         </a>
-        <a href="/sell" style={outlineButtonStyle}>
-          Become a Seller
-        </a>
       </div>
     </main>
   );
