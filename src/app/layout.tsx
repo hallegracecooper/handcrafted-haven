@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Playfair_Display, Open_Sans } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
+import { SessionProvider } from "@/components/SessionProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,8 +42,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${openSans.variable} antialiased`}
       >
-        <Navigation />
-        {children}
+        <SessionProvider>
+          <Navigation />
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

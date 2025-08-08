@@ -25,7 +25,16 @@ const buttonStyle: React.CSSProperties = {
   transition: "all 0.2s ease",
 };
 
-
+const secondaryButtonStyle: React.CSSProperties = {
+  backgroundColor: "transparent",
+  color: "var(--foreground)",
+  padding: "0.75rem 1.5rem",
+  borderRadius: "4px",
+  textDecoration: "none",
+  fontWeight: 600,
+  border: "2px solid var(--foreground)",
+  transition: "all 0.2s ease",
+};
 
 export default function Home() {
   return (
@@ -45,9 +54,15 @@ export default function Home() {
         Discover unique handcrafted items from passionate creators. Support
         sustainable craftsmanship and bring home one-of-a-kind treasures.
       </p>
-      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
         <a href="/products" style={buttonStyle}>
           Browse Products
+        </a>
+        <a href="/auth/signin" style={secondaryButtonStyle}>
+          Sign In
+        </a>
+        <a href="/auth/signup" style={buttonStyle}>
+          Sign Up
         </a>
       </div>
     </main>

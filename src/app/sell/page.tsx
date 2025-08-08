@@ -83,12 +83,15 @@ export default function SellPage() {
   };
 
   const inputStyle = {
-    width: '100%',
+    width: '80%',
     padding: '12px 16px',
     border: '1px solid #d1d5db',
     borderRadius: '8px',
     fontSize: '16px',
     backgroundColor: 'white',
+    textAlign: 'center' as const,
+    margin: '0 auto',
+    display: 'block' as const,
     transition: 'border-color 0.2s ease'
   };
 
@@ -97,7 +100,8 @@ export default function SellPage() {
     marginBottom: '8px',
     fontWeight: '600',
     color: '#374151',
-    fontSize: '14px'
+    fontSize: '14px',
+    textAlign: 'center' as const
   };
 
   const requiredStyle = {
@@ -178,7 +182,8 @@ export default function SellPage() {
                 style={{
                   ...inputStyle,
                   minHeight: '120px',
-                  resize: 'vertical'
+                  resize: 'vertical',
+                  textAlign: 'left'
                 }}
                 required
               />
@@ -244,7 +249,7 @@ export default function SellPage() {
                 placeholder="handmade, cotton, sustainable, organic (separate with commas)"
                 style={inputStyle}
               />
-              <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px', textAlign: 'center' }}>
                 Tags help customers find your product. Use descriptive keywords separated by commas.
               </p>
             </div>
@@ -259,7 +264,9 @@ export default function SellPage() {
                 borderRadius: '8px',
                 padding: '32px',
                 textAlign: 'center',
-                backgroundColor: '#f9fafb'
+                backgroundColor: '#f9fafb',
+                width: '80%',
+                margin: '0 auto'
               }}>
                 <div style={{ fontSize: '48px', color: '#9ca3af', marginBottom: '16px' }}>
                   📷
@@ -292,8 +299,8 @@ export default function SellPage() {
             </div>
 
             {/* Stock Status */}
-            <div style={{ marginBottom: '32px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <div style={{ marginBottom: '32px', textAlign: 'center' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', justifyContent: 'center' }}>
                 <input
                   type="checkbox"
                   name="inStock"
@@ -326,7 +333,7 @@ export default function SellPage() {
               type="submit"
               disabled={isSubmitting}
               style={{
-                width: '100%',
+                width: '80%',
                 padding: '16px 24px',
                 backgroundColor: isSubmitting ? '#9ca3af' : 'var(--accent-terracotta)',
                 color: 'white',
@@ -335,7 +342,9 @@ export default function SellPage() {
                 fontSize: '18px',
                 fontWeight: '600',
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                margin: '0 auto',
+                display: 'block'
               }}
             >
               {isSubmitting ? 'Uploading Product...' : 'Upload Product'}
