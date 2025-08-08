@@ -1,84 +1,65 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-
-interface ProductFormData {
-  title: string;
-  description: string;
-  price: string;
-  category: string;
-  tags: string;
-  inStock: boolean;
-  image: string;
-}
+import { useRouter } from 'next/navigation';
 
 export default function SellPage() {
-  const [formData, setFormData] = useState<ProductFormData>({
+  const router = useRouter();
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
     category: '',
     tags: '',
-    inStock: true,
-    image: ''
+    inStock: true
   });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
-
-  const categories = [
-    { id: 'art', name: 'Art' },
-    { id: 'textiles', name: 'Textiles' },
-    { id: 'jewelry', name: 'Jewelry' },
-    { id: 'home', name: 'Home & Garden' },
-    { id: 'accessories', name: 'Accessories' }
-  ];
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }));
-  };
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitMessage('');
+    
+    // Basic validation
+    const newErrors: Record<string, string> = {};
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+    }
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      newErrors.price = 'Valid price is required';
+    }
+    if (!formData.category) {
+      newErrors.category = 'Category is required';
+    }
 
-    // Simulate form submission
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Validate required fields
-      if (!formData.title || !formData.description || !formData.price || !formData.category) {
-        throw new Error('Please fill in all required fields');
-      }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
-      // Validate price
-      const price = parseFloat(formData.price);
-      if (isNaN(price) || price <= 0) {
-        throw new Error('Please enter a valid price');
-      }
+    // Here you would typically send the data to your API
+    console.log('Form submitted:', formData);
+    
+    // For demo purposes, redirect to products page
+    router.push('/products');
+  };
 
-      setSubmitMessage('Product uploaded successfully! Your item is now live on Handcrafted Haven.');
-      
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        price: '',
-        category: '',
-        tags: '',
-        inStock: true,
-        image: ''
-      });
-    } catch (error) {
-      setSubmitMessage(error instanceof Error ? error.message : 'An error occurred. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
 
@@ -88,11 +69,10 @@ export default function SellPage() {
     border: '1px solid #d1d5db',
     borderRadius: '8px',
     fontSize: '16px',
-    backgroundColor: 'white',
+    marginBottom: '16px',
     textAlign: 'center' as const,
-    margin: '0 auto',
+    margin: '0 auto 16px',
     display: 'block' as const,
-    transition: 'border-color 0.2s ease'
   };
 
   const labelStyle = {
@@ -100,154 +80,173 @@ export default function SellPage() {
     marginBottom: '8px',
     fontWeight: '600',
     color: '#374151',
-    fontSize: '14px',
     textAlign: 'center' as const
   };
 
-  const requiredStyle = {
-    color: '#ef4444'
+  const errorStyle = {
+    color: '#dc2626',
+    fontSize: '14px',
+    marginTop: '4px',
+    textAlign: 'center' as const
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      {/* Breadcrumb Navigation */}
-      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '16px' }}>
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-            <Link href="/" style={{ color: '#6b7280', textDecoration: 'none' }}>
-              Home
-            </Link>
-            <span style={{ color: '#9ca3af' }}>/</span>
-            <span style={{ color: '#111827' }}>Sell Your Products</span>
-          </nav>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '32px 16px' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '32px 16px' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '32px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          border: '1px solid #e5e7eb'
+        }}>
           <h1 style={{
-            fontSize: '36px',
+            fontSize: '28px',
             fontWeight: 'bold',
-            color: '#111827',
-            marginBottom: '16px',
+            marginBottom: '8px',
+            textAlign: 'center',
             fontFamily: "var(--font-playfair), 'Playfair Display', serif"
           }}>
-            Sell Your Handcrafted Treasures
+            Sell Your Handcrafted Items
           </h1>
           <p style={{
-            fontSize: '18px',
             color: '#6b7280',
-            lineHeight: '1.6'
+            textAlign: 'center',
+            marginBottom: '32px'
           }}>
-            Share your unique creations with customers who appreciate handmade quality. 
-            Join our community of talented artisans and start selling today.
+            Share your unique creations with the world
           </p>
-        </div>
 
-        {/* Form */}
-        <div style={{ 
-          backgroundColor: 'white', 
-          borderRadius: '12px', 
-          padding: '32px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             {/* Product Title */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={labelStyle}>
-                Product Title <span style={requiredStyle}>*</span>
+            <div>
+              <label htmlFor="title" style={labelStyle}>
+                Product Title *
               </label>
               <input
                 type="text"
+                id="title"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                placeholder="e.g., Handwoven Cotton Throw Blanket"
-                style={inputStyle}
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.title ? '#dc2626' : '#d1d5db'
+                }}
+                placeholder="Enter product title"
+                aria-describedby={errors.title ? 'title-error' : undefined}
+                aria-invalid={!!errors.title}
                 required
               />
+              {errors.title && (
+                <div id="title-error" style={errorStyle} role="alert">
+                  {errors.title}
+                </div>
+              )}
             </div>
 
             {/* Product Description */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={labelStyle}>
-                Product Description <span style={requiredStyle}>*</span>
+            <div>
+              <label htmlFor="description" style={labelStyle}>
+                Description *
               </label>
               <textarea
+                id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                placeholder="Describe your product in detail. What makes it special? What materials did you use? What are its dimensions?"
                 style={{
                   ...inputStyle,
                   minHeight: '120px',
                   resize: 'vertical',
-                  textAlign: 'left'
+                  textAlign: 'left' // Kept left-aligned
                 }}
+                placeholder="Describe your product in detail"
+                aria-describedby={errors.description ? 'description-error' : undefined}
+                aria-invalid={!!errors.description}
                 required
               />
+              {errors.description && (
+                <div id="description-error" style={errorStyle} role="alert">
+                  {errors.description}
+                </div>
+              )}
             </div>
 
-            {/* Price and Category Row */}
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-              gap: '24px',
-              marginBottom: '24px'
-            }}>
-              {/* Price */}
-              <div>
-                <label style={labelStyle}>
-                  Price ($) <span style={requiredStyle}>*</span>
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  style={inputStyle}
-                  required
-                />
-              </div>
+            {/* Price */}
+            <div>
+              <label htmlFor="price" style={labelStyle}>
+                Price (USD) *
+              </label>
+              <input
+                type="number"
+                id="price"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.price ? '#dc2626' : '#d1d5db'
+                }}
+                placeholder="0.00"
+                aria-describedby={errors.price ? 'price-error' : undefined}
+                aria-invalid={!!errors.price}
+                required
+              />
+              {errors.price && (
+                <div id="price-error" style={errorStyle} role="alert">
+                  {errors.price}
+                </div>
+              )}
+            </div>
 
-              {/* Category */}
-              <div>
-                <label style={labelStyle}>
-                  Category <span style={requiredStyle}>*</span>
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  style={inputStyle}
-                  required
-                >
-                  <option value="">Select a category</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Category */}
+            <div>
+              <label htmlFor="category" style={labelStyle}>
+                Category *
+              </label>
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.category ? '#dc2626' : '#d1d5db'
+                }}
+                aria-describedby={errors.category ? 'category-error' : undefined}
+                aria-invalid={!!errors.category}
+                required
+              >
+                <option value="">Select a category</option>
+                <option value="art">Art</option>
+                <option value="textiles">Textiles</option>
+                <option value="jewelry">Jewelry</option>
+                <option value="home">Home & Garden</option>
+                <option value="accessories">Accessories</option>
+              </select>
+              {errors.category && (
+                <div id="category-error" style={errorStyle} role="alert">
+                  {errors.category}
+                </div>
+              )}
             </div>
 
             {/* Tags */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={labelStyle}>
+            <div>
+              <label htmlFor="tags" style={labelStyle}>
                 Tags
               </label>
               <input
                 type="text"
+                id="tags"
                 name="tags"
                 value={formData.tags}
                 onChange={handleInputChange}
-                placeholder="handmade, cotton, sustainable, organic (separate with commas)"
                 style={inputStyle}
+                placeholder="handmade, unique, sustainable"
               />
               <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px', textAlign: 'center' }}>
                 Tags help customers find your product. Use descriptive keywords separated by commas.
@@ -255,9 +254,9 @@ export default function SellPage() {
             </div>
 
             {/* Image Upload */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={labelStyle}>
-                Product Image
+            <div>
+              <label htmlFor="image" style={labelStyle}>
+                Product Images
               </label>
               <div style={{
                 border: '2px dashed #d1d5db',
@@ -268,38 +267,49 @@ export default function SellPage() {
                 width: '80%',
                 margin: '0 auto'
               }}>
-                <div style={{ fontSize: '48px', color: '#9ca3af', marginBottom: '16px' }}>
-                  📷
+                <div style={{ color: '#6b7280', marginBottom: '8px' }}>
+                  <svg style={{ width: '24px', height: '24px', margin: '0 auto 8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
                 </div>
-                <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '8px' }}>
+                <p style={{ margin: '0 0 8px 0', color: '#374151' }}>
                   Click to upload or drag and drop
                 </p>
-                <p style={{ fontSize: '14px', color: '#9ca3af' }}>
-                  PNG, JPG up to 10MB
+                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                  PNG, JPG, GIF up to 10MB
                 </p>
                 <input
                   type="file"
+                  id="image"
+                  name="image"
                   accept="image/*"
                   style={{ display: 'none' }}
-                  id="image-upload"
+                  aria-describedby="image-help"
                 />
-                <label htmlFor="image-upload" style={{
-                  display: 'inline-block',
-                  padding: '8px 16px',
-                  backgroundColor: 'var(--accent-terracotta)',
-                  color: 'white',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  marginTop: '16px'
-                }}>
-                  Choose File
-                </label>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('image')?.click()}
+                  style={{
+                    marginTop: '16px',
+                    padding: '8px 16px',
+                    backgroundColor: '#2563eb',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Choose Files
+                </button>
               </div>
+              <p id="image-help" style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px', textAlign: 'center' }}>
+                Upload high-quality images to showcase your product
+              </p>
             </div>
 
             {/* Stock Status */}
-            <div style={{ marginBottom: '32px', textAlign: 'center' }}>
+            <div style={{ marginTop: '24px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', justifyContent: 'center' }}>
                 <input
                   type="checkbox"
@@ -308,89 +318,39 @@ export default function SellPage() {
                   onChange={handleInputChange}
                   style={{ width: '16px', height: '16px' }}
                 />
-                <span style={{ fontSize: '16px', color: '#374151' }}>
-                  This item is currently in stock
-                </span>
+                <span>In Stock</span>
               </label>
             </div>
 
-            {/* Submit Message */}
-            {submitMessage && (
-              <div style={{
-                padding: '16px',
-                borderRadius: '8px',
-                marginBottom: '24px',
-                backgroundColor: submitMessage.includes('successfully') ? '#dcfce7' : '#fef2f2',
-                color: submitMessage.includes('successfully') ? '#166534' : '#dc2626',
-                border: `1px solid ${submitMessage.includes('successfully') ? '#bbf7d0' : '#fecaca'}`
-              }}>
-                {submitMessage}
-              </div>
-            )}
-
             {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                width: '80%',
-                padding: '16px 24px',
-                backgroundColor: isSubmitting ? '#9ca3af' : 'var(--accent-terracotta)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '18px',
-                fontWeight: '600',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                margin: '0 auto',
-                display: 'block'
-              }}
-            >
-              {isSubmitting ? 'Uploading Product...' : 'Upload Product'}
-            </button>
+            <div style={{ marginTop: '32px', textAlign: 'center' }}>
+              <button
+                type="submit"
+                style={{
+                  width: '80%',
+                  padding: '12px 24px',
+                  backgroundColor: '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease',
+                  margin: '0 auto',
+                  display: 'block'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1d4ed8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2563eb';
+                }}
+              >
+                List Product
+              </button>
+            </div>
           </form>
-        </div>
-
-        {/* Additional Info */}
-        <div style={{ 
-          backgroundColor: 'white', 
-          borderRadius: '12px', 
-          padding: '32px',
-          marginTop: '32px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#111827',
-            marginBottom: '16px',
-            fontFamily: "var(--font-playfair), 'Playfair Display', serif"
-          }}>
-            Tips for Success
-          </h2>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-              <span style={{ color: 'var(--accent-green)', fontSize: '18px' }}>✓</span>
-                             <span style={{ color: '#374151' }}>Use clear, high-quality photos that showcase your product&apos;s details</span>
-            </li>
-            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-              <span style={{ color: 'var(--accent-green)', fontSize: '18px' }}>✓</span>
-              <span style={{ color: '#374151' }}>Write detailed descriptions that highlight the craftsmanship and materials</span>
-            </li>
-            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-              <span style={{ color: 'var(--accent-green)', fontSize: '18px' }}>✓</span>
-              <span style={{ color: '#374151' }}>Include accurate measurements and care instructions</span>
-            </li>
-            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-              <span style={{ color: 'var(--accent-green)', fontSize: '18px' }}>✓</span>
-              <span style={{ color: '#374151' }}>Set competitive prices that reflect the quality and time invested</span>
-            </li>
-            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-              <span style={{ color: 'var(--accent-green)', fontSize: '18px' }}>✓</span>
-              <span style={{ color: '#374151' }}>Keep your inventory updated to avoid disappointing customers</span>
-            </li>
-          </ul>
         </div>
       </div>
     </div>
