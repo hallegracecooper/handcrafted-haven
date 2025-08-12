@@ -8,13 +8,13 @@ import Product from '@/models/Product';
 import ProductCard from '@/components/ProductCard';
 
 interface SellerProfilePageProps {
-  params: {
+  params: Promise<{
     username: string;
-  };
+  }>;
 }
 
 export default async function SellerProfilePage({ params }: SellerProfilePageProps) {
-  const { username } = params;
+  const { username } = await params;
   
   // Connect to database and find seller
   await connectDB();

@@ -6,13 +6,13 @@ import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
 
 interface ProductDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const { id } = params;
+  const { id } = await params;
   
   // Connect to database and find product
   await connectDB();
@@ -217,7 +217,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 Tags
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {product.tags.map((tag) => (
+                {product.tags.map((tag: string) => (
                   <span key={tag} style={{
                     padding: '4px 12px',
                     backgroundColor: '#e5e7eb',

@@ -6,10 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "migrate": "tsx scripts/migrate-data.ts",
-    "add-test-products": "tsx scripts/add-test-products.ts",
-    "debug-db": "tsx scripts/debug-db.ts"
+        "lint": "next lint"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
