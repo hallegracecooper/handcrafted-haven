@@ -14,6 +14,9 @@ export async function GET() {
     
     // Check database info
     const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection not established');
+    }
     const collections = await db.listCollections().toArray();
     console.log('Collections:', collections.map(c => c.name));
     
