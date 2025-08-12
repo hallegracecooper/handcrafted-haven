@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     // Check if product already in cart
     const existingItemIndex = cart.items.findIndex(
-      item => item.product.toString() === productId
+      (item: any) => item.product.toString() === productId
     );
 
     if (existingItemIndex > -1) {
@@ -124,12 +124,12 @@ export async function PUT(request: NextRequest) {
     if (quantity === 0) {
       // Remove item
       cart.items = cart.items.filter(
-        item => item.product.toString() !== productId
+        (item: any) => item.product.toString() !== productId
       );
     } else {
       // Update quantity
       const itemIndex = cart.items.findIndex(
-        item => item.product.toString() === productId
+        (item: any) => item.product.toString() === productId
       );
       
       if (itemIndex > -1) {
@@ -171,7 +171,7 @@ export async function DELETE(request: NextRequest) {
     if (productId) {
       // Remove specific item
       cart.items = cart.items.filter(
-        item => item.product.toString() !== productId
+        (item: any) => item.product.toString() !== productId
       );
     } else {
       // Clear entire cart
