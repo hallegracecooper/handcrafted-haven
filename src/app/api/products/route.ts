@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
 
@@ -50,11 +52,21 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     
+    // Get the current user session
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
     const body = await request.json();
-    const { title, description, price, category, image, tags, sellerId } = body;
+    const { title, description, price, category, image, tags, inStock } = body;
     
     // Validate required fields
-    if (!title || !description || !price || !category || !image || !sellerId) {
+    if (!title || !description || !price || !category || !image) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -68,7 +80,8 @@ export async function POST(request: NextRequest) {
       category,
       image,
       tags: tags || [],
-      seller: sellerId
+      inStock: inStock !== undefined ? inStock : true,
+      seller: session.user.id
     });
     
     await newProduct.save();

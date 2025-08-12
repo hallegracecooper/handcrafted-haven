@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 export default function SellPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -14,6 +16,40 @@ export default function SellPage() {
     inStock: true
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
+
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (!session) {
+      router.push('/auth/signin');
+    }
+  }, [session, status, router]);
+
+  // Show loading while checking authentication
+  if (status === 'loading') {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        backgroundColor: '#f9fafb'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', color: '#374151' }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render the form if not authenticated
+  if (!session) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,17 +68,71 @@ export default function SellPage() {
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
+    if (!selectedImage) {
+      newErrors.image = 'Product image is required';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // Here you would typically send the data to your API
-    console.log('Form submitted:', formData);
-    
-    // For demo purposes, redirect to products page
-    router.push('/products');
+    setIsUploading(true);
+    setUploadProgress('Uploading image...');
+
+    try {
+      // First, upload the image
+      const imageFormData = new FormData();
+      imageFormData.append('image', selectedImage!);
+      
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: imageFormData,
+      });
+
+      if (!uploadResponse.ok) {
+        const uploadError = await uploadResponse.json();
+        throw new Error(uploadError.error || 'Failed to upload image');
+      }
+
+      const uploadResult = await uploadResponse.json();
+      setUploadProgress('Creating product...');
+
+      // Then create the product with the image URL
+      const productData = {
+        ...formData,
+        image: uploadResult.imageUrl,
+        price: parseFloat(formData.price),
+        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+      };
+
+      const productResponse = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(productData),
+      });
+
+      if (!productResponse.ok) {
+        const productError = await productResponse.json();
+        throw new Error(productError.error || 'Failed to create product');
+      }
+
+      setUploadProgress('Product created successfully!');
+      
+      // Redirect to products page after a short delay
+      setTimeout(() => {
+        router.push('/products');
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error creating product:', error);
+      setErrors({ submit: error instanceof Error ? error.message : 'Failed to create product' });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress('');
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -60,6 +150,28 @@ export default function SellPage() {
         ...prev,
         [name]: ''
       }));
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      
+      // Clear image error if exists
+      if (errors.image) {
+        setErrors(prev => ({
+          ...prev,
+          image: ''
+        }));
+      }
     }
   };
 
@@ -256,7 +368,7 @@ export default function SellPage() {
             {/* Image Upload */}
             <div>
               <label htmlFor="image" style={labelStyle}>
-                Product Images
+                Product Image *
               </label>
               <div style={{
                 border: '2px dashed #d1d5db',
@@ -265,44 +377,89 @@ export default function SellPage() {
                 textAlign: 'center',
                 backgroundColor: '#f9fafb',
                 width: '80%',
-                margin: '0 auto'
+                margin: '0 auto',
+                borderColor: errors.image ? '#dc2626' : '#d1d5db'
               }}>
-                <div style={{ color: '#6b7280', marginBottom: '8px' }}>
-                  <svg style={{ width: '24px', height: '24px', margin: '0 auto 8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                </div>
-                <p style={{ margin: '0 0 8px 0', color: '#374151' }}>
-                  Click to upload or drag and drop
-                </p>
-                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
-                  PNG, JPG, GIF up to 10MB
-                </p>
+                {imagePreview ? (
+                  <div>
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      style={{ 
+                        maxWidth: '200px', 
+                        maxHeight: '200px', 
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        marginBottom: '16px'
+                      }} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setImagePreview('');
+                        document.getElementById('image')?.click();
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        marginRight: '8px'
+                      }}
+                    >
+                      Change Image
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ color: '#6b7280', marginBottom: '8px' }}>
+                      <svg style={{ width: '24px', height: '24px', margin: '0 auto 8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                    </div>
+                    <p style={{ margin: '0 0 8px 0', color: '#374151' }}>
+                      Click to upload or drag and drop
+                    </p>
+                    <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                      PNG, JPG, GIF up to 10MB
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('image')?.click()}
+                      style={{
+                        marginTop: '16px',
+                        padding: '8px 16px',
+                        backgroundColor: '#2563eb',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Choose Files
+                    </button>
+                  </>
+                )}
                 <input
                   type="file"
                   id="image"
                   name="image"
                   accept="image/*"
+                  onChange={handleImageChange}
                   style={{ display: 'none' }}
                   aria-describedby="image-help"
                 />
-                <button
-                  type="button"
-                  onClick={() => document.getElementById('image')?.click()}
-                  style={{
-                    marginTop: '16px',
-                    padding: '8px 16px',
-                    backgroundColor: '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}
-                >
-                  Choose Files
-                </button>
               </div>
+              {errors.image && (
+                <div style={errorStyle} role="alert">
+                  {errors.image}
+                </div>
+              )}
               <p id="image-help" style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px', textAlign: 'center' }}>
                 Upload high-quality images to showcase your product
               </p>
@@ -324,30 +481,53 @@ export default function SellPage() {
 
             {/* Submit Button */}
             <div style={{ marginTop: '32px', textAlign: 'center' }}>
+              {errors.submit && (
+                <div style={{ ...errorStyle, marginBottom: '16px' }} role="alert">
+                  {errors.submit}
+                </div>
+              )}
+              
+              {uploadProgress && (
+                <div style={{ 
+                  color: '#059669', 
+                  fontSize: '14px', 
+                  marginBottom: '16px',
+                  textAlign: 'center',
+                  fontWeight: '500'
+                }}>
+                  {uploadProgress}
+                </div>
+              )}
+              
               <button
                 type="submit"
+                disabled={isUploading}
                 style={{
                   width: '80%',
                   padding: '12px 24px',
-                  backgroundColor: '#2563eb',
+                  backgroundColor: isUploading ? '#9ca3af' : '#2563eb',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '16px',
                   fontWeight: '600',
-                  cursor: 'pointer',
+                  cursor: isUploading ? 'not-allowed' : 'pointer',
                   transition: 'background-color 0.2s ease',
                   margin: '0 auto',
                   display: 'block'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1d4ed8';
+                  if (!isUploading) {
+                    e.currentTarget.style.backgroundColor = '#1d4ed8';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#2563eb';
+                  if (!isUploading) {
+                    e.currentTarget.style.backgroundColor = '#2563eb';
+                  }
                 }}
               >
-                List Product
+                {isUploading ? 'Creating Product...' : 'List Product'}
               </button>
             </div>
           </form>
