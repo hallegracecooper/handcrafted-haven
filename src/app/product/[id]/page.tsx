@@ -2,8 +2,12 @@
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { useState, useEffect, use } from 'react';
+import { useSession } from 'next-auth/react';
 import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
+import ReviewForm from '@/components/ReviewForm';
+import ReviewList from '@/components/ReviewList';
 
 interface ProductDetailPageProps {
   params: Promise<{
@@ -11,13 +15,86 @@ interface ProductDetailPageProps {
   }>;
 }
 
-export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const { id } = await params;
-  
-  // Connect to database and find product
-  await connectDB();
-  const product = await Product.findById(id).populate('seller', 'name username');
-  
+export default function ProductDetailPage({ params }: ProductDetailPageProps) {
+  const { data: session } = useSession();
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRefreshTrigger, setReviewRefreshTrigger] = useState(0);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState('');
+
+  // Unwrap params using React.use()
+  const { id } = use(params);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`/api/products/${id}`);
+        if (!response.ok) {
+          throw new Error('Product not found');
+        }
+        const data = await response.json();
+        setProduct(data);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        notFound();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  const handleAddToCart = async () => {
+    if (!session) {
+      setCartMessage('Please sign in to add items to cart');
+      return;
+    }
+
+    setAddingToCart(true);
+    setCartMessage('');
+
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: product._id,
+          quantity: 1,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add to cart');
+      }
+
+      setCartMessage('Added to cart successfully!');
+      setTimeout(() => setCartMessage(''), 3000);
+    } catch (error) {
+      setCartMessage(error instanceof Error ? error.message : 'Failed to add to cart');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleReviewSubmitted = () => {
+    setShowReviewForm(false);
+    setReviewRefreshTrigger(prev => prev + 1);
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#6b7280' }}>Loading product...</p>
+      </div>
+    );
+  }
+
   if (!product) {
     notFound();
   }
@@ -238,32 +315,55 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               marginBottom: '32px',
               flexDirection: 'column'
             }}>
-              <button style={{
-                width: '100%',
-                padding: '16px 24px',
-                backgroundColor: product.inStock ? 'var(--accent-terracotta)' : '#9ca3af',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: product.inStock ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s ease'
-              }} disabled={!product.inStock}>
-                {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+              {cartMessage && (
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: cartMessage.includes('successfully') ? '#f0fdf4' : '#fef2f2',
+                  border: `1px solid ${cartMessage.includes('successfully') ? '#bbf7d0' : '#fecaca'}`,
+                  borderRadius: '6px',
+                  color: cartMessage.includes('successfully') ? '#166534' : '#dc2626',
+                  fontSize: '14px',
+                  textAlign: 'center'
+                }}>
+                  {cartMessage}
+                </div>
+              )}
+              
+              <button 
+                onClick={handleAddToCart}
+                disabled={!product.inStock || addingToCart}
+                style={{
+                  width: '100%',
+                  padding: '16px 24px',
+                  backgroundColor: product.inStock ? 'var(--accent-terracotta)' : '#9ca3af',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: product.inStock && !addingToCart ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.2s ease',
+                  opacity: addingToCart ? 0.6 : 1
+                }}
+              >
+                {addingToCart ? 'Adding...' : (product.inStock ? 'Add to Cart' : 'Out of Stock')}
               </button>
-              <button style={{
-                width: '100%',
-                padding: '16px 24px',
-                backgroundColor: 'transparent',
-                color: 'var(--accent-terracotta)',
-                border: '2px solid var(--accent-terracotta)',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
+              
+              <button 
+                onClick={() => setShowReviewForm(true)}
+                style={{
+                  width: '100%',
+                  padding: '16px 24px',
+                  backgroundColor: 'transparent',
+                  color: 'var(--accent-terracotta)',
+                  border: '2px solid var(--accent-terracotta)',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
                 Write Review
               </button>
             </div>
@@ -294,6 +394,22 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               </ul>
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div style={{ marginTop: '48px' }}>
+          {showReviewForm && (
+            <ReviewForm
+              productId={product._id}
+              onReviewSubmitted={handleReviewSubmitted}
+              onCancel={() => setShowReviewForm(false)}
+            />
+          )}
+          
+          <ReviewList
+            productId={product._id}
+            refreshTrigger={reviewRefreshTrigger}
+          />
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
+import CartIcon from './CartIcon';
 
 export default function Navigation() {
   const { data: session, status } = useSession();
@@ -93,6 +94,8 @@ export default function Navigation() {
             >
               Sell
             </Link>
+
+            <CartIcon />
 
             {status === 'loading' ? (
               <div 

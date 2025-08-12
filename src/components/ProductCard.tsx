@@ -1,5 +1,10 @@
 'use client';
 
+import Link from 'next/link';
+import Image from 'next/image';
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+
 interface Product {
   _id: string;
   title: string;
@@ -17,17 +22,17 @@ interface Product {
   inStock: boolean;
   tags: string[];
 }
-import Link from 'next/link';
-import Image from 'next/image';
-import { useState } from 'react';
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const { data: session } = useSession();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState('');
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -53,6 +58,46 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
 
     return stars.join('');
+  };
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!session) {
+      setCartMessage('Please sign in to add items to cart');
+      setTimeout(() => setCartMessage(''), 3000);
+      return;
+    }
+
+    setAddingToCart(true);
+    setCartMessage('');
+
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: product._id,
+          quantity: 1,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add to cart');
+      }
+
+      setCartMessage('Added to cart!');
+      setTimeout(() => setCartMessage(''), 3000);
+    } catch (error) {
+      setCartMessage(error instanceof Error ? error.message : 'Failed to add to cart');
+      setTimeout(() => setCartMessage(''), 3000);
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   return (
@@ -210,6 +255,46 @@ export default function ProductCard({ product }: ProductCardProps) {
               </span>
             )}
           </div>
+
+          {/* Add to Cart Button */}
+          {product.inStock && (
+            <button
+              onClick={handleAddToCart}
+              disabled={addingToCart}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                backgroundColor: 'var(--accent-terracotta)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: '500',
+                cursor: addingToCart ? 'not-allowed' : 'pointer',
+                marginTop: '8px',
+                opacity: addingToCart ? 0.6 : 1,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {addingToCart ? 'Adding...' : 'Add to Cart'}
+            </button>
+          )}
+
+          {/* Cart Message */}
+          {cartMessage && (
+            <div style={{
+              padding: '8px',
+              backgroundColor: cartMessage.includes('Added') ? '#f0fdf4' : '#fef2f2',
+              border: `1px solid ${cartMessage.includes('Added') ? '#bbf7d0' : '#fecaca'}`,
+              borderRadius: '4px',
+              color: cartMessage.includes('Added') ? '#166534' : '#dc2626',
+              fontSize: '11px',
+              textAlign: 'center',
+              marginTop: '8px'
+            }}>
+              {cartMessage}
+            </div>
+          )}
 
           {/* Category Badge */}
           <div style={{ marginTop: '8px' }}>
