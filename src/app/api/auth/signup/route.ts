@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { createUser, findUserByEmail } from '@/data/users';
+import connectDB from '@/lib/mongodb';
+import User from '@/models/User';
 
 export async function POST(request: NextRequest) {
   try {
+    // Connect to MongoDB
+    await connectDB();
+
     const { name, email, password, username, role = 'user' } = await request.json();
 
     // Validate required fields
@@ -32,25 +36,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = findUserByEmail(email);
+    const existingUser = await User.findOne({ 
+      $or: [{ email: email.toLowerCase() }, { username }] 
+    });
+    
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'User with this email or username already exists' },
         { status: 409 }
       );
     }
 
-    // Create user (password will be hashed in createUser function)
-    const newUser = await createUser({
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Create new user
+    const newUser = new User({
       name,
-      email,
-      password,
+      email: email.toLowerCase(),
       username,
+      password: hashedPassword,
       role
     });
 
+    await newUser.save();
+
     // Return success (don't return the password)
-    const { password: _, ...userWithoutPassword } = newUser;
+    const { password: _, ...userWithoutPassword } = newUser.toObject();
     
     return NextResponse.json(
       { 

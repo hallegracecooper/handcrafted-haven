@@ -2,19 +2,22 @@
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { products } from '@/data/products';
-import { use } from 'react';
+import connectDB from '@/lib/mongodb';
+import Product from '@/models/Product';
 
 interface ProductDetailPageProps {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const { id } = use(params);
-  const product = products.find(p => p.id === id);
-
+export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
+  const { id } = params;
+  
+  // Connect to database and find product
+  await connectDB();
+  const product = await Product.findById(id).populate('seller', 'name username');
+  
   if (!product) {
     notFound();
   }
@@ -80,16 +83,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               overflow: 'hidden',
               marginBottom: '16px'
             }}>
-              <div style={{
-                width: '100%',
-                height: '100%',
-                background: 'linear-gradient(135deg, var(--border-light) 0%, #d1d5db 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <span style={{ color: '#6b7280', fontSize: '18px' }}>Product Image</span>
-              </div>
+              <img 
+                src={product.image} 
+                alt={product.title}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
             </div>
             
             {/* Thumbnail Gallery (placeholder) */}

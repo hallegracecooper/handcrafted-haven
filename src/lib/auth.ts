@@ -1,7 +1,8 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { users } from "../data/users";
+import connectDB from "./mongodb";
+import User from "../models/User";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,25 +17,32 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = users.find((user: any) => user.email === credentials.email);
-        
-        if (!user) {
+        try {
+          await connectDB();
+          
+          const user = await User.findOne({ email: credentials.email.toLowerCase() });
+          
+          if (!user) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+          
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            username: user.username,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error('Auth error:', error);
           return null;
         }
-
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-        
-        if (!isPasswordValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          username: user.username,
-          role: user.role,
-        };
       }
     })
   ],

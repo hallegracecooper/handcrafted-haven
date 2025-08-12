@@ -1,9 +1,17 @@
 import { MetadataRoute } from 'next'
-import { products } from '@/data/products'
-import { sellers } from '@/data/sellers'
+import connectDB from '@/lib/mongodb'
+import Product from '@/models/Product'
+import User from '@/models/User'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://handcrafted-haven.vercel.app'
+  
+  // Connect to database
+  await connectDB()
+  
+  // Fetch products and sellers from database
+  const products = await Product.find().populate('seller', 'username')
+  const sellers = await User.find({ role: 'seller' })
   
   // Static pages
   const staticPages = [
@@ -41,7 +49,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // Product pages
   const productPages = products.map((product) => ({
-    url: `${baseUrl}/product/${product.id}`,
+    url: `${baseUrl}/product/${product._id}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.8,

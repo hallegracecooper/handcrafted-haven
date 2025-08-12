@@ -1,6 +1,22 @@
 'use client';
 
-import { Product } from '@/data/products';
+interface Product {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  seller: {
+    _id: string;
+    name: string;
+    username: string;
+  };
+  rating: number;
+  reviewCount: number;
+  inStock: boolean;
+  tags: string[];
+}
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -41,7 +57,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link 
-      href={`/product/${product.id}`} 
+      href={`/product/${product._id}`} 
       style={{ display: 'block' }}
       aria-label={`View details for ${product.title} by ${product.seller.name}`}
     >
@@ -68,7 +84,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         }}
         tabIndex={0}
         role="article"
-        aria-labelledby={`product-title-${product.id}`}
+        aria-labelledby={`product-title-${product._id}`}
       >
         {/* Product Image */}
         <div style={{
@@ -117,7 +133,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div style={{ padding: '16px', flex: '1', display: 'flex', flexDirection: 'column' }}>
           {/* Title */}
           <h3 
-            id={`product-title-${product.id}`}
+            id={`product-title-${product._id}`}
             style={{
               fontWeight: '600',
               color: '#111827',

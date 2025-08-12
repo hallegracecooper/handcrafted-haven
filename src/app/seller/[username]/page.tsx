@@ -2,25 +2,30 @@
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { use } from 'react';
-import { getSellerByUsername, getSellerProducts } from '@/data/sellers';
+import connectDB from '@/lib/mongodb';
+import User from '@/models/User';
+import Product from '@/models/Product';
 import ProductCard from '@/components/ProductCard';
 
 interface SellerProfilePageProps {
-  params: Promise<{
+  params: {
     username: string;
-  }>;
+  };
 }
 
-export default function SellerProfilePage({ params }: SellerProfilePageProps) {
-  const { username } = use(params);
-  const seller = getSellerByUsername(username);
-
+export default async function SellerProfilePage({ params }: SellerProfilePageProps) {
+  const { username } = params;
+  
+  // Connect to database and find seller
+  await connectDB();
+  const seller = await User.findOne({ username, role: 'seller' });
+  
   if (!seller) {
     notFound();
   }
 
-  const sellerProducts = getSellerProducts(seller.id);
+  // Get seller's products
+  const sellerProducts = await Product.find({ seller: seller._id });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -101,14 +106,14 @@ export default function SellerProfilePage({ params }: SellerProfilePageProps) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
                 <span style={{ color: '#f59e0b', fontSize: '16px' }}>
-                  {renderStars(seller.averageRating)}
+                  {renderStars(4.5)} {/* Default rating for now */}
                 </span>
                 <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                  {seller.averageRating} ({seller.totalReviews} reviews)
+                  4.5 (12 reviews) {/* Default values for now */}
                 </span>
               </div>
               <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
-                {seller.location}
+                {seller.bio ? 'Artisan' : 'Handcrafted Haven Seller'}
               </p>
             </div>
 
@@ -128,19 +133,19 @@ export default function SellerProfilePage({ params }: SellerProfilePageProps) {
                 color: '#6b7280',
                 marginBottom: '16px'
               }}>
-                {seller.shopDescription}
+                {seller.bio || 'Passionate artisan creating unique handcrafted pieces with love and attention to detail.'}
               </p>
               
-                             {/* Stats */}
-               <div style={{ 
-                 display: 'flex', 
-                 gap: '24px', 
-                 marginBottom: '24px',
-                 flexWrap: 'wrap'
-               }}>
+              {/* Stats */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '24px', 
+                marginBottom: '24px',
+                flexWrap: 'wrap'
+              }}>
                 <div>
                   <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
-                    {seller.yearsExperience}
+                    3
                   </div>
                   <div style={{ fontSize: '14px', color: '#6b7280' }}>
                     Years Experience
@@ -148,7 +153,7 @@ export default function SellerProfilePage({ params }: SellerProfilePageProps) {
                 </div>
                 <div>
                   <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
-                    {seller.totalProducts}
+                    {sellerProducts.length}
                   </div>
                   <div style={{ fontSize: '14px', color: '#6b7280' }}>
                     Products
@@ -156,68 +161,13 @@ export default function SellerProfilePage({ params }: SellerProfilePageProps) {
                 </div>
                 <div>
                   <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
-                    {formatDate(seller.joinDate)}
+                    {formatDate(seller.createdAt)}
                   </div>
                   <div style={{ fontSize: '14px', color: '#6b7280' }}>
                     Member Since
                   </div>
                 </div>
               </div>
-
-                             {/* Social Links */}
-               {seller.socialLinks && (
-                 <div style={{ 
-                   display: 'flex', 
-                   gap: '16px',
-                   flexWrap: 'wrap'
-                 }}>
-                  {seller.socialLinks.instagram && (
-                    <a href={`https://instagram.com/${seller.socialLinks.instagram.replace('@', '')}`} 
-                       target="_blank" 
-                       rel="noopener noreferrer"
-                       style={{
-                         padding: '8px 16px',
-                         backgroundColor: '#e5e7eb',
-                         borderRadius: '6px',
-                         textDecoration: 'none',
-                         color: '#374151',
-                         fontSize: '14px'
-                       }}>
-                      Instagram
-                    </a>
-                  )}
-                  {seller.socialLinks.website && (
-                    <a href={seller.socialLinks.website} 
-                       target="_blank" 
-                       rel="noopener noreferrer"
-                       style={{
-                         padding: '8px 16px',
-                         backgroundColor: '#e5e7eb',
-                         borderRadius: '6px',
-                         textDecoration: 'none',
-                         color: '#374151',
-                         fontSize: '14px'
-                       }}>
-                      Website
-                    </a>
-                  )}
-                  {seller.socialLinks.etsy && (
-                    <a href={`https://etsy.com/shop/${seller.socialLinks.etsy}`} 
-                       target="_blank" 
-                       rel="noopener noreferrer"
-                       style={{
-                         padding: '8px 16px',
-                         backgroundColor: '#e5e7eb',
-                         borderRadius: '6px',
-                         textDecoration: 'none',
-                         color: '#374151',
-                         fontSize: '14px'
-                       }}>
-                      Etsy
-                    </a>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -245,7 +195,7 @@ export default function SellerProfilePage({ params }: SellerProfilePageProps) {
             color: '#374151',
             marginBottom: '24px'
           }}>
-            {seller.bio}
+            {seller.bio || 'A dedicated artisan who pours heart and soul into every creation. Each piece is carefully crafted with attention to detail and a commitment to quality that makes every item truly special.'}
           </p>
           
           {/* Specialties */}
@@ -254,7 +204,7 @@ export default function SellerProfilePage({ params }: SellerProfilePageProps) {
               Specialties
             </h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {seller.specialties.map((specialty) => (
+              {['Handcrafted', 'Unique Designs', 'Quality Materials'].map((specialty) => (
                 <span key={specialty} style={{
                   padding: '6px 12px',
                   backgroundColor: 'var(--accent-green)',
@@ -294,7 +244,7 @@ export default function SellerProfilePage({ params }: SellerProfilePageProps) {
               gap: '24px'
             }}>
               {sellerProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product._id.toString()} product={product} />
               ))}
             </div>
           ) : (
