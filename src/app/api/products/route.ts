@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const search = searchParams.get('search');
+    const userId = searchParams.get('userId');
     
     let query: any = {};
     
@@ -27,6 +28,10 @@ export async function GET(request: NextRequest) {
         { description: { $regex: search, $options: 'i' } },
         { tags: { $in: [new RegExp(search, 'i')] } }
       ];
+    }
+    
+    if (userId) {
+      query.seller = userId;
     }
     
     console.log('Query:', query);

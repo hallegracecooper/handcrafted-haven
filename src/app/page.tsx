@@ -1,3 +1,8 @@
+"use client";
+
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+
 // Inline style helpers (simple for initial mock-up)
 const headingStyle: React.CSSProperties = {
   fontFamily: "var(--font-playfair), 'Playfair Display', serif",
@@ -37,6 +42,8 @@ const secondaryButtonStyle: React.CSSProperties = {
 };
 
 export default function Home() {
+  const { data: session, status } = useSession();
+
   return (
     <main
       style={{
@@ -55,15 +62,24 @@ export default function Home() {
         sustainable craftsmanship and bring home one-of-a-kind treasures.
       </p>
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
-        <a href="/products" style={buttonStyle}>
+        <Link href="/products" style={buttonStyle}>
           Browse Products
-        </a>
-        <a href="/auth/signin" style={secondaryButtonStyle}>
-          Sign In
-        </a>
-        <a href="/auth/signup" style={buttonStyle}>
-          Sign Up
-        </a>
+        </Link>
+        {!session && status !== 'loading' && (
+          <>
+            <Link href="/auth/signin" style={secondaryButtonStyle}>
+              Sign In
+            </Link>
+            <Link href="/auth/signup" style={buttonStyle}>
+              Sign Up
+            </Link>
+          </>
+        )}
+        {session && (
+          <Link href="/dashboard" style={buttonStyle}>
+            Go to Dashboard
+          </Link>
+        )}
       </div>
     </main>
   );

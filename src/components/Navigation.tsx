@@ -68,14 +68,15 @@ export default function Navigation() {
           </Link>
 
           {/* Navigation Links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <Link 
               href="/products" 
               style={{
                 color: '#374151',
                 textDecoration: 'none',
-                fontSize: '16px',
-                fontWeight: '500'
+                fontSize: '14px',
+                fontWeight: '500',
+                whiteSpace: 'nowrap'
               }}
               aria-label="Browse all products"
             >
@@ -87,8 +88,9 @@ export default function Navigation() {
               style={{
                 color: '#374151',
                 textDecoration: 'none',
-                fontSize: '16px',
-                fontWeight: '500'
+                fontSize: '14px',
+                fontWeight: '500',
+                whiteSpace: 'nowrap'
               }}
               aria-label="Sell your handcrafted items"
             >

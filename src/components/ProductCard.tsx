@@ -34,8 +34,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState('');
 
-  // Debug: Log image URL
-  console.log('Product image URL:', product.image);
+
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -106,7 +105,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link 
       href={`/product/${product._id}`} 
-      style={{ display: 'block' }}
+      style={{ display: 'block', textDecoration: 'none' }}
       aria-label={`View details for ${product.title} by ${product.seller.name}`}
     >
       <article
@@ -153,11 +152,9 @@ export default function ProductCard({ product }: ProductCardProps) {
                 transition: 'opacity 0.3s ease'
               }}
               onLoad={() => {
-                console.log('Image loaded successfully:', product.image);
                 setImageLoaded(true);
               }}
-              onError={(e) => {
-                console.error('Image failed to load:', product.image, e);
+              onError={() => {
                 setImageError(true);
               }}
               loading="lazy"
