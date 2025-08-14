@@ -5,6 +5,7 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { SessionProvider } from "@/components/SessionProvider";
+import ConditionalNavigation from "@/components/ConditionalNavigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -121,7 +122,7 @@ export default function RootLayout({
             flexDirection: 'column', 
             minHeight: '100vh' 
           }}>
-            <Navigation />
+            <ConditionalNavigation />
             <main style={{ flex: '1' }}>
               {children}
             </main>
